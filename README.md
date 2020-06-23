@@ -1,5 +1,5 @@
 # Mail API
- A simple Mail API that allows 'front-end only' websites to send emails using malign
+ A simple Mail API that allows 'front-end only' websites to send emails using mailgun
 
 
 ## Server Config Instructions
