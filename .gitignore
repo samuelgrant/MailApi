@@ -1,0 +1,14 @@
+# Build
+obj/*
+bin/*
+
+# IDE 
+.vscode/*
+.vs/*
+
+# Other
+
+*.csproj
+*.csproj.*
+appsettings.json
+Properties/launchSettings.json
