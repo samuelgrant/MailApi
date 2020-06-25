@@ -3,22 +3,22 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using Microsoft.Extensions.Configuration;
 using reCAPTCHA.AspNetCore;
 using Mailgun.Messages;
 using Mailgun.Service;
+using System.Net.Http;
 
 namespace MailApi
 {
     public class Controller : ControllerBase
     {
-        private IConfiguration Configuration;
-        //private IRecaptchaService Recaptcha;
+        private IRecaptchaService Recaptcha;
+        private IMailService MailSettings;
 
-        public Controller(IConfiguration config)//, IRecaptchaService recaptcha
+        public Controller(IRecaptchaService recaptcha, IMailService config)
         {
-            Configuration = config;
-            //Recaptcha = recaptcha;
+            Recaptcha = recaptcha;
+            MailSettings = config;
         }
 
         [HttpGet, Route("/"), Produces("application/json")]
@@ -28,35 +28,43 @@ namespace MailApi
                 { "ApiStatus", "Running" },
                 { "Since", $"{Process.GetCurrentProcess().StartTime.ToString()}" },
                 { "API Version", $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version}" },
-                { "reCaptchaKey", Configuration["RECAPTCHA_KEY"] }
+                { "reCaptchaKey", MailSettings.RECAPTCHA_KEY }
             });
         }
 
         [HttpPost, Route("/"), Produces("application/json")]
-        public async Task<IActionResult> SubmitMail([FromBody] Email email)
+        public async Task<IActionResult> PostMail([FromForm] Email email)
         {
             // Validate the payload and return relevant errors
             if (!ModelState.IsValid)
             {
-                IEnumerable<string> errors = ModelState.Values.SelectMany(v => v.Errors.Select(s => s.ErrorMessage));
-                return BadRequest(errors);
+                var errors = ModelState.Where(ms => ms.Value.Errors.Any()).ToList();
+
+                Dictionary<string, string[]> errdic = new Dictionary<string, string[]>();
+                foreach(var err in errors)
+                {
+                    errdic.Add(err.Key, err.Value.Errors.Select(s => s.ErrorMessage).ToArray());
+                }
+
+                return BadRequest(errdic);
             }
 
-            // Validate reCaptcha response
-            //string recaptchaSecreat = Configuration["RECAPTCHA_SECREAT"];
-            //if (!string.IsNullOrEmpty(recaptchaSecreat))
-            //{
-            //    RecaptchaResponse reCaptcha = await Recaptcha.Validate(email.CaptchaCode);
-            //    if (!reCaptcha.success) return Conflict("Failed to revalidate the reCaptcha");
-            //}
+            //Validate reCaptcha response
+            if (!string.IsNullOrEmpty(MailSettings.RECAPTCHA_SECRET))
+            {              
+                RecaptchaResponse reCaptcha = await Recaptcha.Validate(email.CaptchaCode);
+                if (!reCaptcha.success) return Conflict("Failed to revalidate the reCaptcha");
+            }
 
-            MessageService mailgun = new MessageService(Configuration["MAILGUN_API_KEY"]);
+            MessageService mailgun = new MessageService(MailSettings.MAILGUN_API_KEY, true);
+            if(!MailSettings.SendTo(Request.Headers["origin"], out Recipient recipient))
+            {
+                return Unauthorized("Your website is not allowed to use this service");
+            }
+
             // Build the message
             var em = new MessageBuilder()
-                .AddToRecipient(new Recipient {
-                    DisplayName = email.From.Name,
-                    Email = email.From.Email
-                })
+                .AddToRecipient(recipient)
                 .SetFromAddress(new Recipient
                 {
                     DisplayName = email.From.Name,
@@ -70,8 +78,8 @@ namespace MailApi
                 .SetSubject(email.Subject)
                 .SetTextBody(email.Message);
 
-            var res = await mailgun.SendMessageAsync("workingDomain", em.GetMessage());
-            if (!res.IsSuccessStatusCode)
+            var res = await mailgun.SendMessageAsync("mailservice.samuelgrant.dev", em.GetMessage());
+            if (res.IsSuccessStatusCode)
             {
                 return Ok("Thanks! We received your message.");
             }

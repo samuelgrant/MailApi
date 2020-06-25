@@ -9,29 +9,32 @@ namespace MailApi
 {
     public class Startup
     {
+        public IConfiguration Configuration { get; }
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
+        
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-
-            // Add ReCAPTCHA
-            //services.AddRecaptcha(options =>
-            //{
-            //    options.SiteKey = Configuration["RECAPTCHA_KEY"];
-            //    options.SecretKey = Configuration["RECAPTCHA_SECREAT"];
-            //});
-            //services.AddTransient<IRecaptchaService, RecaptchaService>();
+            services.AddSingleton<IMailService>(Configuration.Get<MailService>());
+           
+            // Add support for ReCAPTCHA
+            services.AddRecaptcha(options =>
+            {
+                options.SiteKey = Configuration["RECAPTCHA_KEY"];
+                options.SecretKey = Configuration["RECAPTCHA_SECRET"];
+                options.Site = "www.google.com";
+            });
+            services.AddTransient<IRecaptchaService, RecaptchaService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IMailService ms)
         {
             if (env.IsDevelopment())
             {
@@ -40,6 +43,13 @@ namespace MailApi
 
             app.UseHttpsRedirection();
             app.UseRouting();
+            app.UseCors(builder =>
+                builder.WithOrigins(ms.AllowedHosts())
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials()
+            );
+
             app.UseEndpoints(endpoints => endpoints.MapControllers());
         }
     }
