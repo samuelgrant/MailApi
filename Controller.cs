@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using reCAPTCHA.AspNetCore;
 using Mailgun.Messages;
 using Mailgun.Service;
-using System.Net.Http;
 
 namespace MailApi
 {
@@ -68,7 +67,7 @@ namespace MailApi
                 .SetFromAddress(new Recipient
                 {
                     DisplayName = email.From.Name,
-                    Email = email.From.Email
+                    Email = MailSettings.MAILGUN_DOMAIN
                 })
                 .SetReplyToAddress(new Recipient
                 {
@@ -78,7 +77,7 @@ namespace MailApi
                 .SetSubject(email.Subject)
                 .SetTextBody(email.Message);
 
-            var res = await mailgun.SendMessageAsync("mailservice.samuelgrant.dev", em.GetMessage());
+            var res = await mailgun.SendMessageAsync(MailSettings.MAILGUN_DOMAIN, em.GetMessage());
             if (res.IsSuccessStatusCode)
             {
                 return Ok("Thanks! We received your message.");

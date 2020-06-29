@@ -4,6 +4,7 @@ namespace MailApi
 {
     public class Email
     {
+        [Required]
         public From From { get; set; }
         public string CaptchaCode { get; set; }
         [Required]
@@ -14,6 +15,7 @@ namespace MailApi
 
     public class From
     {
+
         [Required]
         public string Name { get; set; }
         [Required, EmailAddress]

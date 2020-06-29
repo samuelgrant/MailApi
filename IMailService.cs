@@ -11,6 +11,7 @@ namespace MailApi
         public string RECAPTCHA_KEY { get; set; }
         public string ALLOWED_SITES { set; }
         public string MAILGUN_API_KEY { get; set; }
+        public string MAILGUN_DOMAIN { get; set; }
 
         bool SendTo(string url, out Recipient r);
         string[] AllowedHosts();
@@ -22,6 +23,7 @@ namespace MailApi
         public string RECAPTCHA_KEY { get; set; }
         public string ALLOWED_SITES { get; set; }          
         public string MAILGUN_API_KEY { get; set; }
+        public string MAILGUN_DOMAIN { get; set; }
 
         private Dictionary<string, string> Sites { 
             get
