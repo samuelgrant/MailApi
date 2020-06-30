@@ -67,7 +67,7 @@ namespace MailApi
                 .SetFromAddress(new Recipient
                 {
                     DisplayName = email.From.Name,
-                    Email = MailSettings.MAILGUN_DOMAIN
+                    Email = $"noreply@{MailSettings.MAILGUN_DOMAIN}"
                 })
                 .SetReplyToAddress(new Recipient
                 {
