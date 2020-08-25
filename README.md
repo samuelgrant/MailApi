@@ -25,13 +25,13 @@ If the service is online and accepting connections an `HTTP 200` will be returne
 To send an email make an HTTP request to `POST /` with the following endpoint, all fields are required except for CaptchaCode which is only required if the `GET /` endpoint serves a `reCaptchaKey`.
 ```json
 {
-    CaptchaCode: "",
-    From: {
-       Name: "",
-       Email: ""
+    "CaptchaCode": "",
+    "From": {
+       "Name": "",
+       "Email": ""
     },
-    Message: "",
-    Subject: ""
+    "Message": "",
+    "Subject": ""
 }
 ```
 | Feild       | Notes                                         |
