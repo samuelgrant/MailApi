@@ -60,6 +60,7 @@ namespace MailApi
 
         public string[] AllowedHosts()
         {
+            System.Console.WriteLine(Sites.Select(s => $"https://{s.Key}").ToArray());
             return Sites.Select(s => $"https://{s.Key}").ToArray() ?? null;
         }
     }
